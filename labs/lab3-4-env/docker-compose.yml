@@ -1,0 +1,56 @@
+# Environnement Docker optionnel pour les Labs 3 & 4 (« Option C »).
+#
+# ⚠️  PROPOSITION — À VALIDER PAR L'ENSEIGNANT AVANT USAGE EN SÉANCE.
+#
+# Cet environnement fournit une alternative 100 % Docker à la procédure VM des
+# énoncés (Kali + Metasploitable 2 sous VirtualBox/VMware). Il met les deux
+# machines sur un réseau Docker dédié et isolé, ce qui évite d'exposer la cible
+# vulnérable sur le réseau de l'hôte.
+#
+# Limites connues (voir README.md de ce dossier) :
+#   - L'image Metasploitable 2 ci-dessous est une image COMMUNAUTAIRE non
+#     officielle. Épinglez-la par digest après validation.
+#   - Tous les services vulnérables de la VM d'origine ne sont pas forcément
+#     présents ni identiques. Les énoncés des Labs 3 & 4 restent la référence.
+#   - La partie « iptables / durcissement » du Lab 4 suppose un accès root au
+#     système cible ; dans un conteneur, certaines manipulations réseau
+#     nécessitent `cap_add: [NET_ADMIN]` (déjà ajouté à la cible).
+
+services:
+  # Machine d'attaque (Red Team)
+  kali:
+    image: kalilinux/kali-rolling
+    container_name: kali-atelier
+    tty: true
+    stdin_open: true
+    # Installe la boîte à outils Top 10 au premier démarrage, puis garde le
+    # conteneur actif. Rattachez-vous avec :  docker compose exec kali bash
+    command: >
+      bash -c "apt-get update &&
+               apt-get install -y kali-tools-top10 hydra nmap wordlists &&
+               echo '[kali] Outils prêts. Cible : metasploitable (hostname)' &&
+               tail -f /dev/null"
+    networks:
+      - atelier-net
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  # Machine cible délibérément vulnérable (Blue Team)
+  metasploitable:
+    # Image communautaire — NON officielle. À remplacer/épingler après revue :
+    #   image: <org>/metasploitable2@sha256:<digest>
+    image: tleandrocr/metasploitable2
+    container_name: metasploitable2
+    hostname: metasploitable
+    networks:
+      - atelier-net
+    cap_add:
+      - NET_ADMIN
+    # Pas de `ports:` exposés vers l'hôte : la cible n'est joignable QUE depuis
+    # le conteneur Kali, sur le réseau interne `atelier-net`. C'est voulu.
+
+networks:
+  atelier-net:
+    driver: bridge
+    internal: false
