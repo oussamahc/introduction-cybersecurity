@@ -1,0 +1,27 @@
+# Dépendances et artefacts de build
+/vendor/
+/node_modules/
+
+# Données de base de données persistées (volumes Docker montés localement)
+db_data/
+*.sqlite
+
+# Fichiers d'environnement et secrets
+.env
+.env.local
+
+# Fichiers système / éditeur
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Journaux et fichiers temporaires
+*.log
+*.tmp
+
+# Rapports d'atelier et captures (à rendre, non versionnés)
+*.pdf
+scan_initial.txt
